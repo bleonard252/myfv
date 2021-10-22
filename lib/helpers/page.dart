@@ -35,7 +35,10 @@ class LoadedWebPage implements MyfvPage {
   /// The web URL shown.
   final String address;
   final Key? tabKey;
-  LoadedWebPage(this.address, {this.lookupAddress, this.tabKey}) 
+  /// Whether the connection is being made over HTTPS or a similar secure protocol.
+  final bool isHttps;
+
+  LoadedWebPage(this.address, {this.lookupAddress, this.tabKey, this.isHttps = false}) 
   : assert(lookupAddress == null || lookupAddress == address), super();
 
   /// The address to use in lookups.

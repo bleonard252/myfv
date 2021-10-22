@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:myfv/about_pages/router.dart';
 import 'package:myfv/helpers/page.dart';
 import 'package:myfv/widgets/errorpage.dart';
-import 'package:routemaster/routemaster.dart';
 
 final StateProvider<List<MyfvPage>> tabs = StateProvider((ref) => [
   UnloadedPage("about:blank")
@@ -21,7 +20,6 @@ class BrowserChrome extends StatefulWidget {
 }
 
 class _BrowserChromeState extends State<BrowserChrome> {
-  late final Routemaster _routemaster;
   /// Current tab index
   int currentTab = 0; //TODO: find a better way to do this, maybe
   @override
@@ -33,17 +31,26 @@ class _BrowserChromeState extends State<BrowserChrome> {
           Expanded(
             child: RepaintBoundary(
               child: Consumer(builder: (context, ref, child) {
-                final tab = ref.watch(tabs).state[currentTab];
-                if (tab is UnloadedPage && tab.address.startsWith("about:")) return MaterialApp.router(
-                  routeInformationParser: RoutemasterParser(),
-                  routerDelegate: aboutRouter
-                  ..replace(tab.address.replaceFirst("about:", "/")),
-                  theme: Theme.of(context),
-                  debugShowCheckedModeBanner: false,
-                );
-                else if (tab is UnloadedPage) {
+                final _tabs = ref.watch(tabs);
+                var tab = _tabs.state[currentTab];
+                if (tab is UnloadedPage && tab.address.startsWith("about:")) 
+                  return aboutRouter.route(tab.address.replaceFirst("about:", "/"));
+                if (tab is UnloadedPage) {
                   //TODO: load the page, parse if necessary, and update the tab list
-                  return ErrorScreen(
+                  if (tab.address.contains("://")) {
+                    if (tab.address.startsWith("file://")) throw UnimplementedError("gotta write the renderer!");
+                    else {
+                      tab = LoadedWebPage(tab.address, tabKey: UniqueKey());
+                      _tabs.state[currentTab] = tab;
+                    }
+                  } else if (tab.address.contains("//")) return ErrorScreen(
+                    icon: Icon(Icons.browser_not_supported),
+                    title: Text("Unimplemented operation"),
+                    text: [
+                      Text("Looking up Myfiles by address is not yet supported")
+                    ],
+                    errorCode: Text("MYFV: UNIMPLEMENTED_OPERATION (MYFILE_LOOKUP)"),
+                  ); else return ErrorScreen(
                     icon: Icon(Icons.browser_not_supported),
                     title: Text("Unimplemented operation"),
                     text: [
@@ -51,14 +58,7 @@ class _BrowserChromeState extends State<BrowserChrome> {
                     ],
                     errorCode: Text("MYFV: UNIMPLEMENTED_OPERATION (PAGE_LOAD)"),
                   );
-                } else if (tab is LoadedMyfilePage) return ErrorScreen(
-                  icon: Icon(Icons.browser_not_supported),
-                  title: Text("Unimplemented operation"),
-                  text: [
-                    Text("Rendering Myfiles is not yet supported")
-                  ],
-                  errorCode: Text("MYFV: UNIMPLEMENTED_OPERATION (MYFILE_RENDER)"),
-                ); else if (tab is LoadedMyfilePage) return ErrorScreen(
+                } if (tab is LoadedMyfilePage) return ErrorScreen(
                   icon: Icon(Icons.browser_not_supported),
                   title: Text("Unimplemented operation"),
                   text: [
@@ -72,7 +72,7 @@ class _BrowserChromeState extends State<BrowserChrome> {
                     Text("Rendering webpages is not yet supported")
                   ],
                   errorCode: Text("MYFV: UNIMPLEMENTED_OPERATION (WEB_RENDER)"),
-                ); else throw UnsupportedError("An invalid tab type was provided.");
+                ); else throw UnsupportedError("An invalid tab type was provided (${tab.runtimeType})");
               }),
               key: BrowserChrome.tabRenderBoundsKey
             )
@@ -118,13 +118,44 @@ class _AddressBarState extends ConsumerState<_AddressBar> {
                 borderRadius: BorderRadius.circular(64),
                 clipBehavior: Clip.antiAlias,
                 child: Row(mainAxisSize: MainAxisSize.max, children: [
-                  Tooltip( // tODO: change icons
-                    message: "Local file",
-                    child: IconButton(
-                      onPressed: () => {},
-                      icon: Icon(Icons.insert_drive_file),
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                    )
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final tab = ref.watch(tabs).state[widget.currentTab];
+                      late final _SecurityInformation secInfo;
+                      if (tab is UnloadedPage && tab.address.startsWith("about:")) secInfo = _SecurityInformation(
+                        icon: Icon(Icons.verified, color: Colors.white),
+                        label: "About page",
+                        description: "This is a secure page, built into the app. Third parties cannot change the information displayed on these pages.",
+                        backgroundColor: Colors.green
+                      ); else if (tab is LoadedMyfilePage) secInfo = _SecurityInformation(
+                        // TODO: Myfiles have additional security information to use in the security popup; use it
+                        icon: Icon(Icons.edit_road),
+                        label: "Myfile"
+                      ); else if (tab is LoadedWebPage) secInfo = _SecurityInformation(
+                        icon: Icon(Icons.lock),
+                        label: "Secure Web page"
+                      ); else secInfo = _SecurityInformation(
+                        icon: Icon(Icons.error, color: Colors.red),
+                        label: "Insecure connection"
+                      );
+                      return Consumer(
+                        builder: (ctx, ref, child) => secInfo.backgroundColor == null ? child! : ClipPath(
+                          clipper: _SlantClipper(),
+                          child: child
+                        ),
+                        child: Material(
+                          color: secInfo.backgroundColor ?? Colors.transparent,
+                          child: Tooltip(
+                            message: secInfo.label,
+                            child: IconButton(
+                              onPressed: () => {},
+                              icon: secInfo.icon,
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
                   ),
                   Expanded(
                     child: Padding(
@@ -134,7 +165,7 @@ class _AddressBarState extends ConsumerState<_AddressBar> {
                         focusNode: addressBarFocusNode,
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0.0),
                         ),
                         textInputAction: TextInputAction.go,
                         keyboardType: TextInputType.url,
@@ -174,4 +205,35 @@ class _AddressBarState extends ConsumerState<_AddressBar> {
       ),
     );
   }
+}
+
+class _SecurityInformation {
+  final Icon icon;
+  final String label;
+  /// A background color sometimes used for certain types of pages.
+  final Color? backgroundColor;
+  @Deprecated("Unused for now")
+  final String description;
+  _SecurityInformation({required this.icon, required this.label, this.description = "Unused for now", this.backgroundColor});
+}
+
+// The "slant" clip shape
+class _SlantClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path()
+    ..addPolygon([
+      Offset(0, 0),
+      Offset(size.width-16, 0),
+      Offset(size.width, size.height),
+      Offset(0, size.height)
+    ], true);
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
+    return false;
+  }
+
 }
