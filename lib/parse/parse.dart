@@ -14,7 +14,7 @@ ParsedMyfileData parseMyfileFromJson(Map json) {
   final description = json["description"] ?? json["bio"] ?? json["about"];
   final List<ParsingWarning> warnings = [];
   final links = [
-    for (var link in (json["links"] as List? ?? [])) parseLinkFromJson(link, warningCollector)
+    for (var link in json["links"] ?? []) parseLinkFromJson(link, warningCollector)
   ];
   return ParsedMyfileData(
     name: (json["name"] is Map) ? (json["name"] as Map).values.join(" ") 
@@ -26,13 +26,14 @@ ParsedMyfileData parseMyfileFromJson(Map json) {
     bannerUrl: json["banner"] is String ? json["banner"] : null,
     description: description is String ? description : null,
     nickname: json["nickname"] is String ? json["nickname"] : null,
-    links: links.whereType<ParsedMyfileLinkData>().toList()
+    links: links.whereType<ParsedMyfileLinkData>().toList(),
+    warnings: warningCollector.state
   );
 }
 
 @protected
 ParsedMyfileLinkData? parseLinkFromJson(dynamic json, [WarningCollector? warningCollector]) {
-  if (json !is String) {
+  if (!(json is String)) {
     warningCollector?.warn("Invalid link format",
       "Links must be strings (text). Object links are not yet supported. The type used was ${json.runtimeType.toString()} and the value was ${json.toString()}."
     );

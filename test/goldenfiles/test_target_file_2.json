@@ -1,0 +1,6 @@
+{
+  "loremipsum": "This file tests links, and how the parser reacts to other missing or invalid information.",
+  "links": [
+    "https://web.google.com"
+  ]
+}
