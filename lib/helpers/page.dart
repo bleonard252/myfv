@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 abstract class MyfvPage {
   /// The full Myfile address, as used in the address bar of the browser and
   /// for lookup purposes.
@@ -32,7 +34,8 @@ class UnloadedPage implements MyfvPage {
 class LoadedWebPage implements MyfvPage {
   /// The web URL shown.
   final String address;
-  LoadedWebPage(this.address, {this.lookupAddress}) 
+  final Key? tabKey;
+  LoadedWebPage(this.address, {this.lookupAddress, this.tabKey}) 
   : assert(lookupAddress == null || lookupAddress == address), super();
 
   /// The address to use in lookups.
@@ -45,6 +48,8 @@ class LoadedMyfilePage implements MyfvPage {
   /// The full Myfile address, as used in the address bar of the browser and
   /// for lookup purposes.
   final String address;
+
+  final Key? tabKey;
   
   /// The address to use in lookups.
   /// Some checks will need to be done to this against the one in the address 
@@ -59,6 +64,7 @@ class LoadedMyfilePage implements MyfvPage {
 
   LoadedMyfilePage(this.parsedMyfile, {
     required this.address,
-    this.lookupAddress
+    this.lookupAddress,
+    this.tabKey
   }) : super(); 
 }
