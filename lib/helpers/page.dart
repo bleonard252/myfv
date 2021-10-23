@@ -31,6 +31,19 @@ class UnloadedPage implements MyfvPage {
   /// browser and for lookup purposes.
   final String address;
 }
+class ErrorPage implements MyfvPage {
+  final String address;
+  final String? lookupAddress;
+  final Widget page;
+  /// Used to determine whether anything is at risk from connection failure.
+  final bool preConnection;
+
+  ErrorPage(this.address, {
+    this.lookupAddress, 
+    required this.page,
+    this.preConnection = false
+  });
+}
 class LoadedWebPage implements MyfvPage {
   /// The web URL shown.
   final String address;

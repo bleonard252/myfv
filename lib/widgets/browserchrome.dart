@@ -1,7 +1,9 @@
 import "package:flutter/material.dart";
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:myfv/about_pages/router.dart';
+import 'package:myfv/helpers/load.dart';
 import 'package:myfv/helpers/page.dart';
 import 'package:myfv/widgets/errorpage.dart';
 
@@ -38,10 +40,25 @@ class _BrowserChromeState extends State<BrowserChrome> {
                 if (tab is UnloadedPage) {
                   //TODO: load the page, parse if necessary, and update the tab list
                   if (tab.address.contains("://")) {
-                    if (tab.address.startsWith("file://")) throw UnimplementedError("gotta write the renderer!");
+                    if (tab.address.startsWith("file://")) {
+                      return FutureBuilder(
+                        future: loadMyfileFromFile(tab.address.replaceFirst("file://", "")).then((data) {
+                          tab = data;
+                          _tabs.state[currentTab] = tab;
+                          setState(() {});
+                        }),
+                        builder: (context, snapshot) => snapshot.hasError || snapshot.hasData ? ErrorScreen(
+                          icon: Icon(MdiIcons.syncOff),
+                          title: Text("Failed to load"),
+                          text: [Text(snapshot.error.toString())],
+                          errorCode: Text(snapshot.error.runtimeType.toString()),
+                        ) : Center(child: CircularProgressIndicator(value: null))
+                      );
+                    }
                     else {
                       tab = LoadedWebPage(tab.address, tabKey: UniqueKey());
                       _tabs.state[currentTab] = tab;
+                      setState(() {});
                     }
                   } else if (tab.address.contains("//")) return ErrorScreen(
                     icon: Icon(Icons.browser_not_supported),
@@ -58,7 +75,8 @@ class _BrowserChromeState extends State<BrowserChrome> {
                     ],
                     errorCode: Text("MYFV: UNIMPLEMENTED_OPERATION (PAGE_LOAD)"),
                   );
-                } if (tab is LoadedMyfilePage) return ErrorScreen(
+                } if (tab is ErrorPage) return tab.page;
+                if (tab is LoadedMyfilePage) return ErrorScreen(
                   icon: Icon(Icons.browser_not_supported),
                   title: Text("Unimplemented operation"),
                   text: [
@@ -127,6 +145,16 @@ class _AddressBarState extends ConsumerState<_AddressBar> {
                         label: "About page",
                         description: "This is a secure page, built into the app. Third parties cannot change the information displayed on these pages.",
                         backgroundColor: Colors.green
+                      ); else if (tab is ErrorPage) tab.preConnection ? secInfo = _SecurityInformation(
+                        icon: Icon(Icons.error_outline),
+                        label: "Error page",
+                        backgroundColor: Colors.amber,
+                        description: "An error was encountered before the connection could be established."
+                      ) : secInfo = _SecurityInformation(
+                        icon: Icon(Icons.warning),
+                        label: "Insecure error page",
+                        backgroundColor: Colors.red,
+                        description: "An error was encountered after the connection was established. Any sensitive information sent may have been comprimized."
                       ); else if (tab is LoadedMyfilePage) secInfo = _SecurityInformation(
                         // TODO: Myfiles have additional security information to use in the security popup; use it
                         icon: Icon(Icons.edit_road),
@@ -224,8 +252,8 @@ class _SlantClipper extends CustomClipper<Path> {
     Path path = Path()
     ..addPolygon([
       Offset(0, 0),
-      Offset(size.width-16, 0),
-      Offset(size.width, size.height),
+      Offset(size.width, 0),
+      Offset(size.width-16, size.height),
       Offset(0, size.height)
     ], true);
     return path;
