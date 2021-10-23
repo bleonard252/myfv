@@ -6,6 +6,7 @@ import 'data.dart';
 typedef WarningCollector = StateController<List<ParsingWarning>>;
 extension on WarningCollector {
   void warn(String title, String message) => this.state.add(ParsingWarning(title, message));
+  void recommend(String title, String message) => this.state.add(ParsingRecommendation(title, message));
 }
 
 ParsedMyfileData parseMyfileFromJson(Map json) {
@@ -27,8 +28,39 @@ ParsedMyfileData parseMyfileFromJson(Map json) {
     description: description is String ? description : null,
     nickname: json["nickname"] is String ? json["nickname"] : null,
     links: links.whereType<ParsedMyfileLinkData>().toList(),
+    cards: parseCardsFromJson(json["cards"], warningCollector),
     warnings: warningCollector.state
   );
+}
+
+@protected
+List<MyfileCard> parseCardsFromJson(dynamic json, [WarningCollector? warningCollector]) {
+  if (json == null) return [];
+  if (!(json is List)) {
+    warningCollector?.warn("Invalid field format",
+      "The \"cards\" field must be an array (list). The type used was ${json.runtimeType.toString()}."
+    );
+    return [];
+  } else if (json is List && json.isEmpty) {
+    warningCollector?.recommend("Empty field",
+      "The \"cards\" field should have entries. The type used was ${json.runtimeType.toString()}."
+    );
+  }
+  List<MyfileCard> output = [];
+  for (var card in json) {
+    if ((card["type"] ?? "basic") == "basic" && ((card["title"] ?? card["text"] ?? card["image"]) != null)) {
+      output.add(BasicMyfileCard(
+        title: card["title"],
+        text: card["text"],
+        imageUrl: card["image"]
+      ));
+    } else {
+      warningCollector?.warn("Unknown card type",
+        "A card had an unknown type. The type used was ${card["type"] ?? "basic"}."
+      );
+    }
+  }
+  return output;
 }
 
 @protected

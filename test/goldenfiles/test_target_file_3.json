@@ -1,0 +1,11 @@
+{
+  "name": "Test Target File 3",
+  "banner": "https://i.redd.it/wwqvlwoglbn71.png",
+  "pronouns": "it/its",
+  "cards": [
+    {
+      "title": "Card 1",
+      "text": "Sample"
+    }
+  ]
+}

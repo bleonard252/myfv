@@ -21,13 +21,16 @@ class ParsedMyfileData {
   final String? nickname;
   /// The `"links"` field, which holds links to Web pages or other Myfiles.
   final List<ParsedMyfileLinkData> links;
+  /// A list of Myfile cards.
+  final List<MyfileCard> cards;
 
   /// Warnings presented during parsing.
   final List<ParsingWarning> warnings;
 
   ParsedMyfileData({
     this.name, this.imageUrl, this.description, this.nickname,
-    this.links = const [], this.bannerUrl, this.warnings = const []
+    this.links = const [], this.bannerUrl, this.warnings = const [],
+    this.cards = const []
   });
 
   /// Get the image data as an [ImageProvider], useful in the Image widget.
@@ -41,6 +44,19 @@ class ParsedMyfileLinkData {
   final String url;
 
   ParsedMyfileLinkData(this.url, [this.label]);
+}
+
+mixin MyfileCard {}
+
+class BasicMyfileCard with MyfileCard {
+  final String? title;
+  final String? text;
+  final String? imageUrl;
+
+  BasicMyfileCard({this.title, this.text, this.imageUrl});
+
+  /// Get the image data as an [ImageProvider], useful in the Image widget.
+  ImageProvider? get image => (imageUrl?.startsWith("https://") ?? false) ? NetworkImage(imageUrl!) : null;
 }
 
 /// Warnings for:
@@ -59,7 +75,7 @@ class ParsingWarning {
 }
 /// Grouped with warnings but not counted, these contain tips to make users'
 /// Myfiles better across different apps or on this one.
-/// This should **never** mention unrelated features.
+/// This should **never** mention unrelated features or advertise anything.
 class ParsingRecommendation extends ParsingWarning {
   ParsingRecommendation(String title, String message) : super(title, message);
 }

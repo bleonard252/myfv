@@ -5,10 +5,11 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:myfv/about_pages/router.dart';
 import 'package:myfv/helpers/load.dart';
 import 'package:myfv/helpers/page.dart';
+import 'package:myfv/render/main.dart';
 import 'package:myfv/widgets/errorpage.dart';
 
 final StateProvider<List<MyfvPage>> tabs = StateProvider((ref) => [
-  UnloadedPage("about:blank")
+  UnloadedPage("file://C:/Users/La Esperantisto/Projects/myfv/test/goldenfiles/test_target_file_1.json")
 ]);
 
 class BrowserChrome extends StatefulWidget {
@@ -38,9 +39,9 @@ class _BrowserChromeState extends State<BrowserChrome> {
                 if (tab is UnloadedPage && tab.address.startsWith("about:")) 
                   return aboutRouter.route(tab.address.replaceFirst("about:", "/"));
                 if (tab is UnloadedPage) {
-                  //TODO: load the page, parse if necessary, and update the tab list
                   if (tab.address.contains("://")) {
                     if (tab.address.startsWith("file://")) {
+                      // TODO: check if it's a Myfile or a webpage
                       return FutureBuilder(
                         future: loadMyfileFromFile(tab.address.replaceFirst("file://", "")).then((data) {
                           tab = data;
@@ -76,14 +77,16 @@ class _BrowserChromeState extends State<BrowserChrome> {
                     errorCode: Text("MYFV: UNIMPLEMENTED_OPERATION (PAGE_LOAD)"),
                   );
                 } if (tab is ErrorPage) return tab.page;
-                if (tab is LoadedMyfilePage) return ErrorScreen(
-                  icon: Icon(Icons.browser_not_supported),
-                  title: Text("Unimplemented operation"),
-                  text: [
-                    Text("Rendering Myfiles is not yet supported")
-                  ],
-                  errorCode: Text("MYFV: UNIMPLEMENTED_OPERATION (MYFILE_RENDER)"),
-                ); else if (tab is LoadedWebPage) return ErrorScreen(
+                if (tab is LoadedMyfilePage) return RenderedMyfileScreen(myfile: tab.parsedMyfile);
+                // return ErrorScreen(
+                //   icon: Icon(Icons.browser_not_supported),
+                //   title: Text("Unimplemented operation"),
+                //   text: [
+                //     Text("Rendering Myfiles is not yet supported")
+                //   ],
+                //   errorCode: Text("MYFV: UNIMPLEMENTED_OPERATION (MYFILE_RENDER)"),
+                // );
+                else if (tab is LoadedWebPage) return ErrorScreen(
                   icon: Icon(Icons.browser_not_supported),
                   title: Text("Unimplemented operation"),
                   text: [
@@ -118,6 +121,12 @@ class _AddressBarState extends ConsumerState<_AddressBar> {
 
   late final TextEditingController addressBarController = TextEditingController(text: "about:blank");
   final FocusNode addressBarFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    addressBarController.text = ref.read(tabs).state[widget.currentTab].address;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
