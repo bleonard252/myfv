@@ -11,6 +11,7 @@ class MyfileHeaderSection extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (myfile.banner != null) InkWell(
             child: Image(image: myfile.banner!, height: 128, width: double.infinity, fit: BoxFit.fitWidth),
@@ -25,10 +26,6 @@ class MyfileHeaderSection extends StatelessWidget {
                 padding: const EdgeInsets.all(8.0),
                 child: DecoratedBox(
                   position: DecorationPosition.foreground,
-                  child: InkWell(
-                    child: Image(image: myfile.image!, height: 64, width: 64, fit: BoxFit.cover),
-                    onTap: () => showDialog(context: context, builder: (_) => FullscreenImageViewer(image: myfile.image!))
-                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
@@ -36,6 +33,13 @@ class MyfileHeaderSection extends StatelessWidget {
                       style: BorderStyle.solid,
                       width: 2
                     )
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      child: Image(image: myfile.image!, height: 64, width: 64, fit: BoxFit.cover),
+                      onTap: () => showDialog(context: context, builder: (_) => FullscreenImageViewer(image: myfile.image!))
+                    ),
                   ),
                 ),
               ),
@@ -49,6 +53,25 @@ class MyfileHeaderSection extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          if (myfile.pronouns != null 
+          || (myfile.nickname != null && myfile.name != null)) Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Wrap(
+              direction: Axis.horizontal,
+              alignment: WrapAlignment.start,
+              crossAxisAlignment: WrapCrossAlignment.start,
+              children: [
+                if (myfile.name != null) Padding(
+                  padding: EdgeInsets.only(right: 12, bottom: 8),
+                  child: Text(myfile.name!, style: Theme.of(context).textTheme.caption),
+                ),
+                if (myfile.pronouns != null) Padding(
+                  padding: EdgeInsets.only(right: 12, bottom: 8),
+                  child: Text(myfile.pronouns!, style: Theme.of(context).textTheme.caption),
+                )
+              ]
+            ),
           ),
           if (myfile.description != null) Padding(
             padding: const EdgeInsets.all(8.0),

@@ -16,6 +16,8 @@ class ParsedMyfileData {
   // final ImageProvider? banner;
   /// The `"description"` field, used for bios and object descriptions.
   final String? description;
+  /// The `"pronouns"` field, advertising the owner's preferred pronouns.
+  final String? pronouns;
   /// The `"nickname"` field, used as a primary display name when set,
   /// pushing [name] to a lower priority.
   final String? nickname;
@@ -30,7 +32,7 @@ class ParsedMyfileData {
   ParsedMyfileData({
     this.name, this.imageUrl, this.description, this.nickname,
     this.links = const [], this.bannerUrl, this.warnings = const [],
-    this.cards = const []
+    this.cards = const [], this.pronouns
   });
 
   /// Get the image data as an [ImageProvider], useful in the Image widget.

@@ -27,6 +27,7 @@ ParsedMyfileData parseMyfileFromJson(Map json) {
     bannerUrl: json["banner"] is String ? json["banner"] : null,
     description: description is String ? description : null,
     nickname: json["nickname"] is String ? json["nickname"] : null,
+    pronouns: json["pronouns"] is String ? json["pronouns"] : null,
     links: links.whereType<ParsedMyfileLinkData>().toList(),
     cards: parseCardsFromJson(json["cards"], warningCollector),
     warnings: warningCollector.state

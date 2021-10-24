@@ -2,6 +2,7 @@
   "name": "Test Target File 3",
   "banner": "https://i.redd.it/wwqvlwoglbn71.png",
   "pronouns": "it/its",
+  "description": "Another test of additional components, mostly used during the render phase.",
   "cards": [
     {
       "title": "Card 1",
